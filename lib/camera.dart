@@ -25,7 +25,11 @@ class _CameraScreenState extends State<CameraScreen> {
     if(cameras!.length > 0){
       for(CameraDescription camera in cameras!){
         buttons.add(
-          ElevatedButton(onPressed: (){
+          ElevatedButton(
+              style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all(Color(0xff4f000b))
+              ),
+              onPressed: (){
             setState(() {
               activeCamera = camera;
               setCameraController();
@@ -34,9 +38,12 @@ class _CameraScreenState extends State<CameraScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(Icons.camera_alt),
+                Icon(Icons.camera_alt , color: Colors.white,),
                 SizedBox(width: 10,),
-                Text(camera == null ? '' : camera.name == '0' ? 'back' : camera.name == '1' ? 'front': '')
+                Text(camera == null ? '' : camera.name == '0' ? 'back' : camera.name == '1' ? 'front': '' ,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold, color: Colors.white
+                  ),)
               ],
           )
           )
@@ -54,14 +61,14 @@ class _CameraScreenState extends State<CameraScreen> {
     await cameraController?.initialize();
 
     setState(() {
-      cameraPreview = CameraPreview(cameraController!);
+      cameraPreview =  CameraPreview(cameraController!);
 
     });
   }
 
   Future takePicture()async{
-    if( !cameraController!.value.isInitialized) return null;
-    if(cameraController!.value.isTakingPicture) return null;
+    if( !cameraController!.value.isInitialized) return;
+    if(cameraController!.value.isTakingPicture) return;
     try {
       await cameraController?.setFlashMode(FlashMode.off);
       XFile? picture = await cameraController?.takePicture();
@@ -82,33 +89,47 @@ class _CameraScreenState extends State<CameraScreen> {
       });
     });
   }
+
+  @override
+  void dispose(){
+    if(activeCamera ==  null){
+      cameraController?.dispose();
+    }
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          Row(
-          children:
-            cameraButtons ?? [Container(child: Text('no Cameras Available '))],
-          ),
-          Container(width: MediaQuery.of(context).size.height / 2, child: cameraPreview) ,
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ElevatedButton(
-                  onPressed: (){
-                    if(cameraController != null){
-                      takePicture().then((dynamic picture) {
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => PictureScreen(picture)));
-                      });
-                    }
-                  },
-                  child: Text('Take Picture'))
-            ],
-          ),
-        ],
+    return SafeArea(
+      child: Container(
+        padding: EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Row(
+            children:
+              cameraButtons ?? [Container(child: Text('no Cameras Available '))],
+            ),
+            Container(width: MediaQuery.of(context).size.height / 3, child: cameraPreview) ,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(Color(0xff4f000b))
+                  ),
+                    onPressed: (){
+                      if(cameraController != null){
+                        takePicture().then((dynamic picture) async{
+                          XFile pic= await picture;
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => PictureScreen(pic)));
+                        });
+                      }
+                    },
+                    child: Text('Take Picture'))
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
